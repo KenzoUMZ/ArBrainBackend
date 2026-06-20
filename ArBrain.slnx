@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ArBrain.Api/ArBrain.Api.csproj" />
+    <Project Path="src/ArBrain.Application/ArBrain.Application.csproj" />
+    <Project Path="src/ArBrain.Domain/ArBrain.Domain.csproj" />
+    <Project Path="src/ArBrain.Infrastructure/ArBrain.Infrastructure.csproj" />
+  </Folder>
+</Solution>
