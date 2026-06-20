@@ -1,0 +1,585 @@
+{
+  "info": {
+    "_postman_id": "arbrain-api-collection",
+    "name": "ArBrain API",
+    "description": "Collection para testar a API de gestão fermentativa.\n\n## Pré-requisitos\n1. PostgreSQL: `docker compose up -d`\n2. API: `dotnet run --project src/ArBrain.Api`\n\n## Estilos de cerveja (enum numérico)\n| Valor | Estilo |\n|-------|--------|\n| 1 | IPA |\n| 2 | Lager |\n| 3 | Pilsner |\n| 4 | Stout |\n| 5 | Porter |\n| 6 | Weiss |\n| 7 | Sour |\n| 8 | PaleAle |\n\n## Fluxo sugerido\nExecute a pasta **00 - Fluxo de teste** na ordem para validar cadastro e persistência no banco.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5242"
+    },
+    {
+      "key": "beerId",
+      "value": ""
+    },
+    {
+      "key": "tankId",
+      "value": ""
+    },
+    {
+      "key": "recordId",
+      "value": ""
+    },
+    {
+      "key": "batchNumber",
+      "value": "IPA001"
+    }
+  ],
+  "item": [
+    {
+      "name": "00 - Fluxo de teste",
+      "description": "Execute os requests desta pasta **em ordem** para validar a API e a persistência no PostgreSQL.",
+      "item": [
+        {
+          "name": "1. Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/health"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('API está saudável', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().status).to.eql('healthy');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "2. Listar cervejas (seed)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/beers"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Lista cervejas retornou 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const beers = pm.response.json();",
+                  "if (beers.length > 0) {",
+                  "    pm.collectionVariables.set('beerId', beers[0].id);",
+                  "    pm.environment.set('beerId', beers[0].id);",
+                  "    console.log('beerId definido:', beers[0].id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "3. Listar tanques (seed)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/tanks"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Lista tanques retornou 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const tanks = pm.response.json();",
+                  "if (tanks.length > 0) {",
+                  "    pm.collectionVariables.set('tankId', tanks[0].id);",
+                  "    pm.environment.set('tankId', tanks[0].id);",
+                  "    console.log('tankId definido:', tanks[0].id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "4. Criar cerveja",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const suffix = Date.now();",
+                  "pm.collectionVariables.set('testBeerName', `Teste Witbier ${suffix}`);"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Cerveja criada com 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "const beer = pm.response.json();",
+                  "pm.collectionVariables.set('beerId', beer.id);",
+                  "pm.environment.set('beerId', beer.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{testBeerName}}\",\n  \"style\": 6\n}"
+            },
+            "url": "{{baseUrl}}/api/beers"
+          }
+        },
+        {
+          "name": "5. Definir parâmetros da cerveja",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"minTemperature\": 18,\n  \"maxTemperature\": 22,\n  \"minPh\": 4.2,\n  \"maxPh\": 4.6,\n  \"minExtract\": 10,\n  \"maxExtract\": 14\n}"
+            },
+            "url": "{{baseUrl}}/api/beers/{{beerId}}/parameters"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Parâmetros salvos com 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "6. Criar tanque",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const suffix = Date.now();",
+                  "pm.collectionVariables.set('testTankName', `Tanque Teste FV-${suffix}`);"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Tanque criado com 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "const tank = pm.response.json();",
+                  "pm.collectionVariables.set('tankId', tank.id);",
+                  "pm.environment.set('tankId', tank.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{testTankName}}\",\n  \"capacityLiters\": 800\n}"
+            },
+            "url": "{{baseUrl}}/api/tanks"
+          }
+        },
+        {
+          "name": "7. Registrar apontamento fermentativo",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const suffix = Date.now();",
+                  "pm.collectionVariables.set('testBatchNumber', `TEST${suffix}`);"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Apontamento criado com 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "const record = pm.response.json();",
+                  "pm.collectionVariables.set('recordId', record.id);",
+                  "pm.collectionVariables.set('batchNumber', record.batchNumber);",
+                  "pm.environment.set('recordId', record.id);",
+                  "pm.environment.set('batchNumber', record.batchNumber);",
+                  "",
+                  "pm.test('Status de conformidade calculado', function () {",
+                  "    pm.expect(record.complianceStatus).to.be.oneOf(['WithinStandard', 'RequiresAttention', 'OutOfStandard', 1, 2, 3]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"registeredAt\": \"2026-06-20T14:30:00Z\",\n  \"beerId\": \"{{beerId}}\",\n  \"tankId\": \"{{tankId}}\",\n  \"batchNumber\": \"{{testBatchNumber}}\",\n  \"temperature\": 20,\n  \"ph\": 4.4,\n  \"extract\": 12,\n  \"observations\": \"Apontamento criado via Postman\"\n}"
+            },
+            "url": "{{baseUrl}}/api/fermentation-records"
+          }
+        },
+        {
+          "name": "8. Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/dashboard"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Dashboard retornou 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const summary = pm.response.json();",
+                  "pm.test('Total de registros > 0', function () {",
+                  "    pm.expect(summary.totalRecords).to.be.above(0);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "9. Histórico do lote criado",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/fermentation-records/batches/{{batchNumber}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Histórico retornou 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const history = pm.response.json();",
+                  "pm.test('Lote possui apontamentos', function () {",
+                  "    pm.expect(history.records.length).to.be.above(0);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "10. Histórico do lote seed IPA001",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/fermentation-records/batches/IPA001"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Histórico IPA001 retornou 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const history = pm.response.json();",
+                  "pm.test('Seed possui 2 apontamentos', function () {",
+                  "    pm.expect(history.records.length).to.eql(2);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/health"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Beers",
+      "item": [
+        {
+          "name": "Listar cervejas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/beers"
+          }
+        },
+        {
+          "name": "Obter cerveja por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/beers/{{beerId}}"
+          }
+        },
+        {
+          "name": "Criar cerveja",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Nova Cerveja\",\n  \"style\": 1\n}"
+            },
+            "url": "{{baseUrl}}/api/beers"
+          }
+        },
+        {
+          "name": "Atualizar cerveja",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Cerveja Atualizada\",\n  \"style\": 2\n}"
+            },
+            "url": "{{baseUrl}}/api/beers/{{beerId}}"
+          }
+        },
+        {
+          "name": "Definir parâmetros fermentativos",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"minTemperature\": 18,\n  \"maxTemperature\": 22,\n  \"minPh\": 4.2,\n  \"maxPh\": 4.6,\n  \"minExtract\": 10,\n  \"maxExtract\": 14\n}"
+            },
+            "url": "{{baseUrl}}/api/beers/{{beerId}}/parameters"
+          }
+        },
+        {
+          "name": "Inativar cerveja",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/beers/{{beerId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tanks",
+      "item": [
+        {
+          "name": "Listar tanques",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/tanks"
+          }
+        },
+        {
+          "name": "Obter tanque por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/tanks/{{tankId}}"
+          }
+        },
+        {
+          "name": "Criar tanque",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Tanque FV-03\",\n  \"capacityLiters\": 2000\n}"
+            },
+            "url": "{{baseUrl}}/api/tanks"
+          }
+        },
+        {
+          "name": "Atualizar tanque",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Tanque FV-03 Atualizado\",\n  \"capacityLiters\": 2200\n}"
+            },
+            "url": "{{baseUrl}}/api/tanks/{{tankId}}"
+          }
+        },
+        {
+          "name": "Inativar tanque",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/tanks/{{tankId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Fermentation Records",
+      "item": [
+        {
+          "name": "Listar apontamentos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/fermentation-records"
+          }
+        },
+        {
+          "name": "Obter apontamento por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/fermentation-records/{{recordId}}"
+          }
+        },
+        {
+          "name": "Registrar apontamento",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"registeredAt\": \"2026-06-20T10:00:00Z\",\n  \"beerId\": \"{{beerId}}\",\n  \"tankId\": \"{{tankId}}\",\n  \"batchNumber\": \"LOTE001\",\n  \"temperature\": 19.5,\n  \"ph\": 4.35,\n  \"extract\": 11.5,\n  \"observations\": \"Medição de rotina\"\n}"
+            },
+            "url": "{{baseUrl}}/api/fermentation-records"
+          }
+        },
+        {
+          "name": "Listar lotes (resumo)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/fermentation-records/batches"
+          }
+        },
+        {
+          "name": "Histórico do lote",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/fermentation-records/batches/{{batchNumber}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "item": [
+        {
+          "name": "Resumo do dashboard",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/dashboard"
+          }
+        }
+      ]
+    }
+  ]
+}

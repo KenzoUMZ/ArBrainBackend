@@ -21,6 +21,8 @@ public static class DependencyInjection
             options.UseNpgsql(connectionString));
 
         services.AddScoped<IBeerRepository, BeerRepository>();
+        services.AddScoped<ITankRepository, TankRepository>();
+        services.AddScoped<IFermentationRecordRepository, FermentationRecordRepository>();
 
         return services;
     }

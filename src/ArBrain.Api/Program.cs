@@ -1,5 +1,6 @@
 using ArBrain.Application;
 using ArBrain.Api.Endpoints;
+using ArBrain.Api.Middleware;
 using ArBrain.Infrastructure;
 using ArBrain.Infrastructure.Data;
 
@@ -27,8 +28,29 @@ var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
-    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await DbInitializer.InitializeAsync(context);
+    try
+    {
+        var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        await DbInitializer.InitializeAsync(context);
+    }
+    catch (Exception ex) when (ex is Npgsql.NpgsqlException or TimeoutException)
+    {
+        Console.ForegroundColor = ConsoleColor.Red;
+        Console.WriteLine("""
+            ERRO: não foi possível conectar ao PostgreSQL em localhost:5432.
+
+            Causa provável: Docker Desktop não está rodando ou o container do banco não foi iniciado.
+
+            Passos:
+              1. Abra o Docker Desktop e aguarde ficar "Running"
+              2. Na pasta ArBrainBackend: docker compose up -d
+              3. Verifique: docker compose ps
+              4. Rode novamente: dotnet run --project src/ArBrain.Api
+
+            """);
+        Console.ResetColor();
+        throw;
+    }
 }
 
 if (app.Environment.IsDevelopment())
@@ -36,6 +58,7 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseCors("Frontend");
 app.UseHttpsRedirection();
 
@@ -48,5 +71,8 @@ app.MapGet("/api/health", () => Results.Ok(new
 .WithTags("Health");
 
 app.MapBeerEndpoints();
+app.MapTankEndpoints();
+app.MapFermentationRecordEndpoints();
+app.MapDashboardEndpoints();
 
 app.Run();
