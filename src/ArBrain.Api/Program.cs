@@ -1,6 +1,5 @@
 using ArBrain.Application;
-using ArBrain.Api.Endpoints;
-using ArBrain.Api.Middleware;
+using ArBrain.Api.Extensions;
 using ArBrain.Infrastructure;
 using ArBrain.Infrastructure.Data;
 
@@ -58,21 +57,7 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-app.UseMiddleware<ExceptionHandlingMiddleware>();
-app.UseCors("Frontend");
-app.UseHttpsRedirection();
-
-app.MapGet("/api/health", () => Results.Ok(new
-{
-    status = "healthy",
-    timestamp = DateTime.UtcNow,
-}))
-.WithName("HealthCheck")
-.WithTags("Health");
-
-app.MapBeerEndpoints();
-app.MapTankEndpoints();
-app.MapFermentationRecordEndpoints();
-app.MapDashboardEndpoints();
+app.UseArBrainMiddleware();
+app.MapArBrainEndpoints();
 
 app.Run();
