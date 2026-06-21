@@ -1,4 +1,6 @@
+using ArBrain.Application.Common;
 using ArBrain.Application.DTOs.Beers;
+using ArBrain.Application.DTOs.Common;
 using ArBrain.Application.Exceptions;
 using ArBrain.Application.Interfaces.Repositories;
 using ArBrain.Application.Interfaces.Services;
@@ -9,10 +11,23 @@ namespace ArBrain.Application.Services;
 
 public class BeerService(IBeerRepository beerRepository) : IBeerService
 {
-    public async Task<IReadOnlyList<BeerDto>> GetAllAsync(CancellationToken cancellationToken = default)
+    public async Task<PagedResult<BeerDto>> GetAllAsync(
+        string? search = null,
+        string? sortBy = null,
+        string? sortDir = null,
+        int page = 1,
+        int pageSize = PaginationQuery.DefaultPageSize,
+        CancellationToken cancellationToken = default)
     {
-        var beers = await beerRepository.GetAllActiveAsync(cancellationToken);
-        return beers.Select(BeerMapper.ToDto).ToList();
+        var (normalizedPage, normalizedSize, _) = PaginationQuery.Normalize(page, pageSize);
+        var (beers, totalItems) = await beerRepository.GetAllActiveAsync(
+            search, sortBy, sortDir, normalizedPage, normalizedSize, cancellationToken);
+
+        return new PagedResult<BeerDto>(
+            beers.Select(BeerMapper.ToDto).ToList(),
+            normalizedPage,
+            normalizedSize,
+            totalItems);
     }
 
     public async Task<BeerDto> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)

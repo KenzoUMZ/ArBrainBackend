@@ -1,10 +1,18 @@
+using ArBrain.Application.Common;
+using ArBrain.Application.DTOs.Common;
 using ArBrain.Application.DTOs.Beers;
 
 namespace ArBrain.Application.Interfaces.Services;
 
 public interface IBeerService
 {
-    Task<IReadOnlyList<BeerDto>> GetAllAsync(CancellationToken cancellationToken = default);
+    Task<PagedResult<BeerDto>> GetAllAsync(
+        string? search = null,
+        string? sortBy = null,
+        string? sortDir = null,
+        int page = 1,
+        int pageSize = PaginationQuery.DefaultPageSize,
+        CancellationToken cancellationToken = default);
 
     Task<BeerDto> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 

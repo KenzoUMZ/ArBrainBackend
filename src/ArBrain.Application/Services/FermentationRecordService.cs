@@ -1,4 +1,7 @@
+using ArBrain.Application.Common;
 using ArBrain.Application.DTOs.FermentationRecords;
+using ArBrain.Application.DTOs.Common;
+using ArBrain.Domain.Enums;
 using ArBrain.Application.Exceptions;
 using ArBrain.Application.Interfaces.Repositories;
 using ArBrain.Application.Interfaces.Services;
@@ -13,11 +16,24 @@ public class FermentationRecordService(
     IBeerRepository beerRepository,
     ITankRepository tankRepository) : IFermentationRecordService
 {
-    public async Task<IReadOnlyList<FermentationRecordDto>> GetAllAsync(
+    public async Task<PagedResult<FermentationRecordDto>> GetAllAsync(
+        string? search = null,
+        string? sortBy = null,
+        string? sortDir = null,
+        FermentationComplianceStatus? complianceStatus = null,
+        int page = 1,
+        int pageSize = PaginationQuery.DefaultPageSize,
         CancellationToken cancellationToken = default)
     {
-        var records = await fermentationRecordRepository.GetAllAsync(cancellationToken);
-        return records.Select(FermentationRecordMapper.ToDto).ToList();
+        var (normalizedPage, normalizedSize, _) = PaginationQuery.Normalize(page, pageSize);
+        var (records, totalItems) = await fermentationRecordRepository.GetAllAsync(
+            search, sortBy, sortDir, complianceStatus, normalizedPage, normalizedSize, cancellationToken);
+
+        return new PagedResult<FermentationRecordDto>(
+            records.Select(FermentationRecordMapper.ToDto).ToList(),
+            normalizedPage,
+            normalizedSize,
+            totalItems);
     }
 
     public async Task<FermentationRecordDto> GetByIdAsync(
@@ -76,9 +92,12 @@ public class FermentationRecordService(
     }
 
     public async Task<IReadOnlyList<BatchSummaryDto>> GetBatchSummariesAsync(
+        string? search = null,
+        string? sortBy = null,
+        string? sortDir = null,
         CancellationToken cancellationToken = default)
     {
-        var summaries = await fermentationRecordRepository.GetBatchSummariesAsync(cancellationToken);
+        var summaries = await fermentationRecordRepository.GetBatchSummariesAsync(search, sortBy, sortDir, cancellationToken);
 
         return summaries
             .Select(item => new BatchSummaryDto(item.BatchNumber, item.BeerName, item.Count))

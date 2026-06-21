@@ -1,10 +1,17 @@
+using ArBrain.Application.Common;
 using ArBrain.Domain.Entities;
 
 namespace ArBrain.Application.Interfaces.Repositories;
 
 public interface IBeerRepository
 {
-    Task<IReadOnlyList<Beer>> GetAllActiveAsync(CancellationToken cancellationToken = default);
+    Task<(IReadOnlyList<Beer> Items, int TotalItems)> GetAllActiveAsync(
+        string? search = null,
+        string? sortBy = null,
+        string? sortDir = null,
+        int page = 1,
+        int pageSize = PaginationQuery.DefaultPageSize,
+        CancellationToken cancellationToken = default);
 
     Task<Beer?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 

@@ -1,10 +1,18 @@
+using ArBrain.Application.Common;
+using ArBrain.Application.DTOs.Common;
 using ArBrain.Application.DTOs.Tanks;
 
 namespace ArBrain.Application.Interfaces.Services;
 
 public interface ITankService
 {
-    Task<IReadOnlyList<TankDto>> GetAllAsync(CancellationToken cancellationToken = default);
+    Task<PagedResult<TankDto>> GetAllAsync(
+        string? search = null,
+        string? sortBy = null,
+        string? sortDir = null,
+        int page = 1,
+        int pageSize = PaginationQuery.DefaultPageSize,
+        CancellationToken cancellationToken = default);
 
     Task<TankDto> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 

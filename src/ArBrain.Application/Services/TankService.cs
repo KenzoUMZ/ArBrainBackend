@@ -1,4 +1,6 @@
+using ArBrain.Application.Common;
 using ArBrain.Application.DTOs.Tanks;
+using ArBrain.Application.DTOs.Common;
 using ArBrain.Application.Exceptions;
 using ArBrain.Application.Interfaces.Repositories;
 using ArBrain.Application.Interfaces.Services;
@@ -9,10 +11,23 @@ namespace ArBrain.Application.Services;
 
 public class TankService(ITankRepository tankRepository) : ITankService
 {
-    public async Task<IReadOnlyList<TankDto>> GetAllAsync(CancellationToken cancellationToken = default)
+    public async Task<PagedResult<TankDto>> GetAllAsync(
+        string? search = null,
+        string? sortBy = null,
+        string? sortDir = null,
+        int page = 1,
+        int pageSize = PaginationQuery.DefaultPageSize,
+        CancellationToken cancellationToken = default)
     {
-        var tanks = await tankRepository.GetAllActiveAsync(cancellationToken);
-        return tanks.Select(TankMapper.ToDto).ToList();
+        var (normalizedPage, normalizedSize, _) = PaginationQuery.Normalize(page, pageSize);
+        var (tanks, totalItems) = await tankRepository.GetAllActiveAsync(
+            search, sortBy, sortDir, normalizedPage, normalizedSize, cancellationToken);
+
+        return new PagedResult<TankDto>(
+            tanks.Select(TankMapper.ToDto).ToList(),
+            normalizedPage,
+            normalizedSize,
+            totalItems);
     }
 
     public async Task<TankDto> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
