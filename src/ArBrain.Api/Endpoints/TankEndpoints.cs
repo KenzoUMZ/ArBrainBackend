@@ -1,3 +1,4 @@
+using ArBrain.Application.Common;
 using ArBrain.Application.DTOs.Tanks;
 using ArBrain.Application.Interfaces.Services;
 
@@ -9,8 +10,15 @@ public static class TankEndpoints
     {
         var group = app.MapGroup("/api/tanks").WithTags("Tanks");
 
-        group.MapGet("/", async (ITankService service, CancellationToken ct) =>
-            Results.Ok(await service.GetAllAsync(ct)))
+        group.MapGet("/", async (
+            string? search,
+            string? sortBy,
+            string? sortDir,
+            int page,
+            int pageSize,
+            ITankService service,
+            CancellationToken ct) =>
+            Results.Ok(await service.GetAllAsync(search, sortBy, sortDir, page, pageSize, ct)))
             .WithName("GetTanks");
 
         group.MapGet("/{id:guid}", async (Guid id, ITankService service, CancellationToken ct) =>

@@ -1,3 +1,4 @@
+using ArBrain.Application.Common;
 using ArBrain.Application.DTOs.FermentationRecords;
 using ArBrain.Application.Interfaces.Services;
 
@@ -9,13 +10,33 @@ public static class FermentationRecordEndpoints
     {
         var group = app.MapGroup("/api/fermentation-records").WithTags("FermentationRecords");
 
-        group.MapGet("/", async (IFermentationRecordService service, CancellationToken ct) =>
-            Results.Ok(await service.GetAllAsync(ct)))
+        group.MapGet("/", async (
+            string? search,
+            string? sortBy,
+            string? sortDir,
+            string? complianceStatus,
+            int page,
+            int pageSize,
+            IFermentationRecordService service,
+            CancellationToken ct) =>
+            Results.Ok(await service.GetAllAsync(
+                search,
+                sortBy,
+                sortDir,
+                ComplianceQuery.ParseStatus(complianceStatus),
+                page,
+                pageSize,
+                ct)))
             .WithName("GetFermentationRecords");
 
         // Rotas literais antes de /{id} para evitar conflito com "batches".
-        group.MapGet("/batches", async (IFermentationRecordService service, CancellationToken ct) =>
-            Results.Ok(await service.GetBatchSummariesAsync(ct)))
+        group.MapGet("/batches", async (
+            string? search,
+            string? sortBy,
+            string? sortDir,
+            IFermentationRecordService service,
+            CancellationToken ct) =>
+            Results.Ok(await service.GetBatchSummariesAsync(search, sortBy, sortDir, ct)))
             .WithName("GetBatchSummaries");
 
         group.MapGet("/batches/{batchNumber}", async (

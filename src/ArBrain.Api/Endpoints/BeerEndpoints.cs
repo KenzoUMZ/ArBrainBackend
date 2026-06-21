@@ -1,3 +1,4 @@
+using ArBrain.Application.Common;
 using ArBrain.Application.DTOs.Beers;
 using ArBrain.Application.Interfaces.Services;
 
@@ -9,8 +10,15 @@ public static class BeerEndpoints
     {
         var group = app.MapGroup("/api/beers").WithTags("Beers");
 
-        group.MapGet("/", async (IBeerService service, CancellationToken ct) =>
-            Results.Ok(await service.GetAllAsync(ct)))
+        group.MapGet("/", async (
+            string? search,
+            string? sortBy,
+            string? sortDir,
+            int page,
+            int pageSize,
+            IBeerService service,
+            CancellationToken ct) =>
+            Results.Ok(await service.GetAllAsync(search, sortBy, sortDir, page, pageSize, ct)))
             .WithName("GetBeers");
 
         group.MapGet("/{id:guid}", async (Guid id, IBeerService service, CancellationToken ct) =>
