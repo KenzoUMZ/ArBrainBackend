@@ -1,3 +1,4 @@
+using ArBrain.Application.Common;
 using ArBrain.Application.Interfaces.Repositories;
 using ArBrain.Domain.Entities;
 using ArBrain.Infrastructure.Data;
@@ -7,14 +8,44 @@ namespace ArBrain.Infrastructure.Repositories;
 
 public class BeerRepository(AppDbContext context) : IBeerRepository
 {
-    public async Task<IReadOnlyList<Beer>> GetAllActiveAsync(CancellationToken cancellationToken = default)
+    public async Task<(IReadOnlyList<Beer> Items, int TotalItems)> GetAllActiveAsync(
+        string? search = null,
+        string? sortBy = null,
+        string? sortDir = null,
+        int page = 1,
+        int pageSize = PaginationQuery.DefaultPageSize,
+        CancellationToken cancellationToken = default)
     {
-        return await context.Beers
+        var term = SearchTerm.Normalize(search)?.ToLowerInvariant();
+        var sortField = SortQuery.NormalizeField(sortBy);
+        var descending = SortQuery.IsDescending(sortDir);
+        var (_, normalizedSize, skip) = PaginationQuery.Normalize(page, pageSize);
+
+        var query = context.Beers
             .AsNoTracking()
             .Include(b => b.FermentationParameters)
-            .Where(b => b.IsActive)
-            .OrderBy(b => b.Name)
-            .ToListAsync(cancellationToken);
+            .Where(b => b.IsActive);
+
+        if (term is not null)
+        {
+            query = query.Where(b =>
+                b.Name.ToLower().Contains(term) ||
+                b.Style.ToString().ToLower().Contains(term));
+        }
+
+        query = (sortField, descending) switch
+        {
+            ("style", false) => query.OrderBy(b => b.Style).ThenBy(b => b.Name),
+            ("style", true) => query.OrderByDescending(b => b.Style).ThenBy(b => b.Name),
+            ("parameters", false) => query.OrderBy(b => b.FermentationParameters == null).ThenBy(b => b.Name),
+            ("parameters", true) => query.OrderByDescending(b => b.FermentationParameters == null).ThenBy(b => b.Name),
+            ("name", true) => query.OrderByDescending(b => b.Name),
+            _ => query.OrderBy(b => b.Name),
+        };
+
+        var totalItems = await query.CountAsync(cancellationToken);
+        var items = await query.Skip(skip).Take(normalizedSize).ToListAsync(cancellationToken);
+        return (items, totalItems);
     }
 
     public async Task<Beer?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)

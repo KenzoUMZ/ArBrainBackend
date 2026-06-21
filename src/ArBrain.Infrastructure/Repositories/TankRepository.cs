@@ -1,3 +1,4 @@
+using ArBrain.Application.Common;
 using ArBrain.Application.Interfaces.Repositories;
 using ArBrain.Domain.Entities;
 using ArBrain.Infrastructure.Data;
@@ -7,13 +8,39 @@ namespace ArBrain.Infrastructure.Repositories;
 
 public class TankRepository(AppDbContext context) : ITankRepository
 {
-    public async Task<IReadOnlyList<Tank>> GetAllActiveAsync(CancellationToken cancellationToken = default)
+    public async Task<(IReadOnlyList<Tank> Items, int TotalItems)> GetAllActiveAsync(
+        string? search = null,
+        string? sortBy = null,
+        string? sortDir = null,
+        int page = 1,
+        int pageSize = PaginationQuery.DefaultPageSize,
+        CancellationToken cancellationToken = default)
     {
-        return await context.Tanks
+        var term = SearchTerm.Normalize(search)?.ToLowerInvariant();
+        var sortField = SortQuery.NormalizeField(sortBy);
+        var descending = SortQuery.IsDescending(sortDir);
+        var (_, normalizedSize, skip) = PaginationQuery.Normalize(page, pageSize);
+
+        var query = context.Tanks
             .AsNoTracking()
-            .Where(t => t.IsActive)
-            .OrderBy(t => t.Name)
-            .ToListAsync(cancellationToken);
+            .Where(t => t.IsActive);
+
+        if (term is not null)
+        {
+            query = query.Where(t => t.Name.ToLower().Contains(term));
+        }
+
+        query = (sortField, descending) switch
+        {
+            ("capacity", false) => query.OrderBy(t => t.CapacityLiters).ThenBy(t => t.Name),
+            ("capacity", true) => query.OrderByDescending(t => t.CapacityLiters).ThenBy(t => t.Name),
+            ("name", true) => query.OrderByDescending(t => t.Name),
+            _ => query.OrderBy(t => t.Name),
+        };
+
+        var totalItems = await query.CountAsync(cancellationToken);
+        var items = await query.Skip(skip).Take(normalizedSize).ToListAsync(cancellationToken);
+        return (items, totalItems);
     }
 
     public async Task<Tank?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
