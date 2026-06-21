@@ -2,7 +2,27 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "db: start",
+            "type": "shell",
+            "command": "./scripts/start-db.sh",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "api: free-port",
+            "type": "shell",
+            "command": "lsof -ti:5242 | xargs kill -9 2>/dev/null || true",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": []
+        },
+        {
             "label": "build",
+            "dependsOn": ["db: start", "api: free-port"],
+            "dependsOrder": "sequence",
             "command": "dotnet",
             "type": "process",
             "args": [
@@ -24,6 +44,52 @@
                 "${workspaceFolder}/src/ArBrain.Api/ArBrain.Api.csproj"
             ],
             "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "api: wait-for-health",
+            "type": "shell",
+            "command": "./scripts/wait-for-api.sh",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "frontend: free-port",
+            "type": "shell",
+            "command": "lsof -ti:5173 | xargs kill -9 2>/dev/null || true",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "frontend: pre-dev",
+            "dependsOn": ["frontend: free-port", "api: wait-for-health"],
+            "dependsOrder": "sequence",
+            "problemMatcher": []
+        },
+        {
+            "label": "frontend: dev",
+            "dependsOn": ["frontend: free-port"],
+            "dependsOrder": "sequence",
+            "type": "shell",
+            "command": "npm run dev",
+            "options": {
+                "cwd": "${workspaceFolder}/../ArBrainFrontend"
+            },
+            "isBackground": true,
+            "problemMatcher": {
+                "owner": "vite",
+                "pattern": {
+                    "regexp": "."
+                },
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": ".",
+                    "endsPattern": "Local:\\s+http://localhost:5173"
+                }
+            }
         }
     ]
 }

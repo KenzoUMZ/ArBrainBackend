@@ -1,0 +1,4 @@
+{
+  "dotnet.defaultSolution": "ArBrain.sln",
+  "dotnet.server.useOmnisharp": false
+}

@@ -7,5 +7,7 @@
 			"path": "../ArBrainFrontend"
 		}
 	],
-	"settings": {}
+	"settings": {
+		"dotnet.defaultSolution": "ArBrain.sln"
+	}
 }
