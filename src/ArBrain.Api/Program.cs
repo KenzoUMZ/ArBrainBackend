@@ -30,7 +30,12 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        await DbInitializer.InitializeAsync(context);
+        var seedMode = app.Configuration["ARBRAIN_SEED_MODE"];
+
+        if (seedMode == "reset")
+            await DbInitializer.ResetAndSeedAsync(context);
+        else
+            await DbInitializer.InitializeAsync(context);
     }
     catch (Exception ex) when (ex is Npgsql.NpgsqlException or TimeoutException)
     {

@@ -13,19 +13,24 @@
       "env": {
         "ASPNETCORE_ENVIRONMENT": "Development",
         "ASPNETCORE_URLS": "http://localhost:5242"
-      }
+      },
+      "presentation": { "hidden": true }
     },
     {
-      "name": "Frontend (Vite)",
-      "type": "node-terminal",
+      "name": "ArBrain API (Seed)",
+      "type": "coreclr",
       "request": "launch",
-      "preLaunchTask": "frontend: free-port",
-      "command": "npm run dev",
-      "cwd": "${workspaceFolder}/../ArBrainFrontend",
-      "serverReadyAction": {
-        "action": "openExternally",
-        "pattern": "Local:\\s+(http://localhost:5173/?)"
-      }
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/src/ArBrain.Api/bin/Debug/net10.0/ArBrain.Api.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/ArBrain.Api",
+      "stopAtEntry": false,
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "http://localhost:5242",
+        "ARBRAIN_SEED_MODE": "reset"
+      },
+      "presentation": { "hidden": true }
     },
     {
       "name": "Frontend (Vite, wait API)",
@@ -37,12 +42,8 @@
       "serverReadyAction": {
         "action": "openExternally",
         "pattern": "Local:\\s+(http://localhost:5173/?)"
-      }
-    },
-    {
-      "name": ".NET Core Attach",
-      "type": "coreclr",
-      "request": "attach"
+      },
+      "presentation": { "hidden": true }
     }
   ],
   "compounds": [
@@ -50,9 +51,13 @@
       "name": "Fullstack (API + Frontend)",
       "configurations": ["ArBrain API", "Frontend (Vite, wait API)"],
       "stopAll": true,
-      "presentation": {
-        "order": 1
-      }
+      "presentation": { "order": 1 }
+    },
+    {
+      "name": "Fullstack + Seed (reset DB)",
+      "configurations": ["ArBrain API (Seed)", "Frontend (Vite, wait API)"],
+      "stopAll": true,
+      "presentation": { "order": 2 }
     }
   ]
 }
