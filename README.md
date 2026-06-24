@@ -16,6 +16,68 @@ src/
 
 **Pré-requisito:** [Docker Desktop](https://www.docker.com/products/docker-desktop/) instalado e **em execução** (ícone da baleia ativo na barra de menu).
 
+### Opção recomendada — Run and Debug (VS Code / Cursor)
+
+O projeto inclui configurações em [`.vscode/launch.json`](.vscode/launch.json) e tarefas em [`.vscode/tasks.json`](.vscode/tasks.json).
+
+**Abra o workspace multi-root** [`ArBrain.code-workspace`](ArBrain.code-workspace) (backend + frontend juntos) ou abra a pasta `ArBrainBackend` com o frontend em `../ArBrainFrontend`.
+
+No painel **Run and Debug** (`⇧⌘D` / `Ctrl+Shift+D`), escolha uma das duas opções:
+
+| Configuração | O que faz |
+|--------------|-----------|
+| **Fullstack (API + Frontend)** | Sobe o banco, builda e inicia a API, aguarda o health check e inicia o Vite. Mantém os dados existentes no banco. |
+| **Fullstack + Seed (reset DB)** | Igual ao anterior, mas **esvazia o banco** e popula com dados de desenvolvimento (20 cervejas, 20 tanques, 20 lotes). |
+
+Pressione **F5** (ou o botão de play) para iniciar. Ao parar o debug, ambos os processos são encerrados (`stopAll: true`).
+
+**URLs após subir:**
+
+| Serviço | URL |
+|---------|-----|
+| Frontend | http://localhost:5173 |
+| API | http://localhost:5242 |
+| Health check | http://localhost:5242/api/health |
+
+#### O que cada run executa (por trás)
+
+**Fullstack (API + Frontend)**
+
+1. `db: start` — roda [`scripts/start-db.sh`](scripts/start-db.sh): verifica/abre o Docker e sobe o PostgreSQL (`docker compose up -d`)
+2. `api: free-port` — libera a porta `5242` se já estiver em uso
+3. `build` — compila `ArBrain.Api`
+4. **ArBrain API** — inicia a API em `http://localhost:5242` (seed mínimo só se o banco estiver vazio)
+5. `frontend: free-port` — libera a porta `5173`
+6. `api: wait-for-health` — aguarda `GET /api/health` responder (até 120s)
+7. **Frontend (Vite)** — `npm run dev` em `../ArBrainFrontend` e abre o navegador quando o Vite estiver pronto
+
+**Fullstack + Seed (reset DB)**
+
+Mesmo fluxo acima, mas a API recebe `ARBRAIN_SEED_MODE=reset`. Na subida, a API:
+
+1. Aplica migrations pendentes
+2. Executa `TRUNCATE` nas tabelas de dados
+3. Popula o banco com o seed de desenvolvimento (ver [Seed de demonstração](#seed-de-demonstração))
+
+> Use **Fullstack + Seed** quando quiser testar paginação, filtros e ordenação com volume de dados.
+
+#### Rodar só a API ou só o frontend
+
+As configurações individuais (`ArBrain API`, `ArBrain API (Seed)`, `Frontend`) existem para os compounds funcionarem e ficam ocultas no seletor. Para subir apenas um lado, use o terminal:
+
+```bash
+# Só API (seed mínimo se banco vazio)
+dotnet run --project src/ArBrain.Api
+
+# Só API com reset + seed de desenvolvimento
+ARBRAIN_SEED_MODE=reset dotnet run --project src/ArBrain.Api
+
+# Só frontend (API já deve estar rodando)
+cd ../ArBrainFrontend && npm run dev
+```
+
+### Opção manual — terminal
+
 ```bash
 # Opção A — script que abre o Docker e sobe o banco automaticamente
 ./scripts/start-db.sh
@@ -111,6 +173,26 @@ Cada apontamento é classificado automaticamente:
 
 ## Seed de demonstração
 
-- Cervejas: ArBrain IPA, Golden Lager (com parâmetros)
-- Tanques: FV-01 (1000L), FV-02 (1500L)
-- Lote **IPA001** com 2 apontamentos de exemplo
+O seed roda automaticamente na subida da API (`Program.cs` → `DbInitializer`). O comportamento depende de `ARBRAIN_SEED_MODE`:
+
+| Modo | Quando | Comportamento |
+|------|--------|---------------|
+| *(padrão)* | **Fullstack** ou `dotnet run` sem variável | Aplica migrations. Se o banco estiver **vazio**, insere o seed mínimo. Se já houver dados, **não altera nada**. |
+| `reset` | **Fullstack + Seed** ou `ARBRAIN_SEED_MODE=reset dotnet run` | Aplica migrations, **esvazia** as tabelas e insere o seed de desenvolvimento. |
+
+### Seed mínimo (banco vazio)
+
+- **2 cervejas:** ArBrain IPA, Golden Lager (com parâmetros fermentativos)
+- **2 tanques:** Tanque FV-01 (1000 L), Tanque FV-02 (1500 L)
+- **2 lotes:** IPA001 (2 apontamentos), LAG001 (1 apontamento)
+
+### Seed de desenvolvimento (`ARBRAIN_SEED_MODE=reset`)
+
+Pensado para testar paginação, busca, filtros de conformidade e histórico de lotes no frontend:
+
+- **20 cervejas** — variedade de estilos (IPA, Lager, Pilsner, Stout, Porter, Weiss, Sour, Pale Ale)
+- **20 tanques** — Tanque FV-01 a FV-20 (capacidades de 900 L a 2800 L)
+- **20 lotes** — um lote por cerveja (ex.: IPA001, LAG001, PIL001…)
+- **~140 apontamentos** — 6 a 8 medições por lote, com evolução temporal e mix de status de conformidade
+
+> **Atenção:** o modo `reset` apaga todos os dados de cervejas, tanques e apontamentos. Use apenas em ambiente local de desenvolvimento.
