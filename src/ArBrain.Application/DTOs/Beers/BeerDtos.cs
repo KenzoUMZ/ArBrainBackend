@@ -7,6 +7,8 @@ public record BeerDto(
     string Name,
     BeerStyle Style,
     DateTime CreatedAt,
+    DateTime UpdatedAt,
+    DateTime? DeletedAt,
     BeerFermentationParametersDto? Parameters);
 
 public record CreateBeerDto(string Name, BeerStyle Style);

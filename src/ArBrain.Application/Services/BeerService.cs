@@ -17,11 +17,12 @@ public class BeerService(IBeerRepository beerRepository) : IBeerService
         string? sortDir = null,
         int page = 1,
         int pageSize = PaginationQuery.DefaultPageSize,
+        bool deletedOnly = false,
         CancellationToken cancellationToken = default)
     {
         var (normalizedPage, normalizedSize, _) = PaginationQuery.Normalize(page, pageSize);
         var (beers, totalItems) = await beerRepository.GetAllActiveAsync(
-            search, sortBy, sortDir, normalizedPage, normalizedSize, cancellationToken);
+            search, sortBy, sortDir, normalizedPage, normalizedSize, deletedOnly, cancellationToken);
 
         return new PagedResult<BeerDto>(
             beers.Select(BeerMapper.ToDto).ToList(),
@@ -52,6 +53,8 @@ public class BeerService(IBeerRepository beerRepository) : IBeerService
             Id = Guid.NewGuid(),
             Name = dto.Name.Trim(),
             Style = dto.Style,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
         };
 
         await beerRepository.AddAsync(beer, cancellationToken);
@@ -87,6 +90,28 @@ public class BeerService(IBeerRepository beerRepository) : IBeerService
             ?? throw new NotFoundException($"Cerveja '{id}' não encontrada.");
 
         beer.IsActive = false;
+        beer.UpdatedAt = DateTime.UtcNow;
+        beer.DeletedAt = DateTime.UtcNow;
+        await beerRepository.UpdateAsync(beer, cancellationToken);
+    }
+
+    public async Task RestoreAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var beer = await beerRepository.GetByIdIncludingDeletedAsync(id, cancellationToken)
+            ?? throw new NotFoundException($"Cerveja '{id}' não encontrada.");
+
+        if (beer.IsActive)
+        {
+            throw new BusinessRuleException("Esta cerveja já está ativa.");
+        }
+
+        if (await beerRepository.ExistsByNameAsync(beer.Name, cancellationToken: cancellationToken))
+        {
+            throw new BusinessRuleException($"Já existe uma cerveja ativa com o nome '{beer.Name}'.");
+        }
+
+        beer.IsActive = true;
+        beer.DeletedAt = null;
         beer.UpdatedAt = DateTime.UtcNow;
         await beerRepository.UpdateAsync(beer, cancellationToken);
     }

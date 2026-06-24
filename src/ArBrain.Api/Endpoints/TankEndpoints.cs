@@ -16,9 +16,10 @@ public static class TankEndpoints
             string? sortDir,
             int page,
             int pageSize,
+            bool? deletedOnly,
             ITankService service,
             CancellationToken ct) =>
-            Results.Ok(await service.GetAllAsync(search, sortBy, sortDir, page, pageSize, ct)))
+            Results.Ok(await service.GetAllAsync(search, sortBy, sortDir, page, pageSize, deletedOnly ?? false, ct)))
             .WithName("GetTanks");
 
         group.MapGet("/{id:guid}", async (Guid id, ITankService service, CancellationToken ct) =>
@@ -42,6 +43,13 @@ public static class TankEndpoints
             return Results.NoContent();
         })
         .WithName("DeleteTank");
+
+        group.MapPost("/{id:guid}/restore", async (Guid id, ITankService service, CancellationToken ct) =>
+        {
+            await service.RestoreAsync(id, ct);
+            return Results.NoContent();
+        })
+        .WithName("RestoreTank");
 
         return group;
     }

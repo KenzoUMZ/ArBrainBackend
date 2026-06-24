@@ -11,9 +11,12 @@ public interface IBeerRepository
         string? sortDir = null,
         int page = 1,
         int pageSize = PaginationQuery.DefaultPageSize,
+        bool deletedOnly = false,
         CancellationToken cancellationToken = default);
 
     Task<Beer?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+
+    Task<Beer?> GetByIdIncludingDeletedAsync(Guid id, CancellationToken cancellationToken = default);
 
     Task<Beer?> GetByIdWithParametersAsync(Guid id, CancellationToken cancellationToken = default);
 

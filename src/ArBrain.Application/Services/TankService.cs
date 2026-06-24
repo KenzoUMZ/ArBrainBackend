@@ -17,11 +17,12 @@ public class TankService(ITankRepository tankRepository) : ITankService
         string? sortDir = null,
         int page = 1,
         int pageSize = PaginationQuery.DefaultPageSize,
+        bool deletedOnly = false,
         CancellationToken cancellationToken = default)
     {
         var (normalizedPage, normalizedSize, _) = PaginationQuery.Normalize(page, pageSize);
         var (tanks, totalItems) = await tankRepository.GetAllActiveAsync(
-            search, sortBy, sortDir, normalizedPage, normalizedSize, cancellationToken);
+            search, sortBy, sortDir, normalizedPage, normalizedSize, deletedOnly, cancellationToken);
 
         return new PagedResult<TankDto>(
             tanks.Select(TankMapper.ToDto).ToList(),
@@ -52,6 +53,8 @@ public class TankService(ITankRepository tankRepository) : ITankService
             Id = Guid.NewGuid(),
             Name = dto.Name.Trim(),
             CapacityLiters = dto.CapacityLiters,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
         };
 
         await tankRepository.AddAsync(tank, cancellationToken);
@@ -87,6 +90,28 @@ public class TankService(ITankRepository tankRepository) : ITankService
             ?? throw new NotFoundException($"Tanque '{id}' não encontrado.");
 
         tank.IsActive = false;
+        tank.UpdatedAt = DateTime.UtcNow;
+        tank.DeletedAt = DateTime.UtcNow;
+        await tankRepository.UpdateAsync(tank, cancellationToken);
+    }
+
+    public async Task RestoreAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var tank = await tankRepository.GetByIdIncludingDeletedAsync(id, cancellationToken)
+            ?? throw new NotFoundException($"Tanque '{id}' não encontrado.");
+
+        if (tank.IsActive)
+        {
+            throw new BusinessRuleException("Este tanque já está ativo.");
+        }
+
+        if (await tankRepository.ExistsByNameAsync(tank.Name, cancellationToken: cancellationToken))
+        {
+            throw new BusinessRuleException($"Já existe um tanque ativo com o nome '{tank.Name}'.");
+        }
+
+        tank.IsActive = true;
+        tank.DeletedAt = null;
         tank.UpdatedAt = DateTime.UtcNow;
         await tankRepository.UpdateAsync(tank, cancellationToken);
     }

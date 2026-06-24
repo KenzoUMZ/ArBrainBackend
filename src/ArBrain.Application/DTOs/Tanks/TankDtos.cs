@@ -4,7 +4,9 @@ public record TankDto(
     Guid Id,
     string Name,
     decimal CapacityLiters,
-    DateTime CreatedAt);
+    DateTime CreatedAt,
+    DateTime UpdatedAt,
+    DateTime? DeletedAt);
 
 public record CreateTankDto(string Name, decimal CapacityLiters);
 

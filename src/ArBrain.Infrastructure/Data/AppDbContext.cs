@@ -30,7 +30,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(b => b.Style).HasConversion<string>().HasMaxLength(30).IsRequired();
             entity.Property(b => b.CreatedAt).HasDefaultValueSql("NOW() AT TIME ZONE 'UTC'");
 
-            entity.HasIndex(b => b.Name).IsUnique();
+            entity.HasIndex(b => b.Name)
+                .IsUnique()
+                .HasFilter("\"IsActive\" = TRUE");
             entity.HasIndex(b => b.IsActive);
         });
     }
@@ -70,7 +72,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(t => t.CapacityLiters).HasPrecision(10, 2);
             entity.Property(t => t.CreatedAt).HasDefaultValueSql("NOW() AT TIME ZONE 'UTC'");
 
-            entity.HasIndex(t => t.Name).IsUnique();
+            entity.HasIndex(t => t.Name)
+                .IsUnique()
+                .HasFilter("\"IsActive\" = TRUE");
             entity.HasIndex(t => t.IsActive);
         });
     }

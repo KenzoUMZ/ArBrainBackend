@@ -14,6 +14,7 @@ public class BeerRepository(AppDbContext context) : IBeerRepository
         string? sortDir = null,
         int page = 1,
         int pageSize = PaginationQuery.DefaultPageSize,
+        bool deletedOnly = false,
         CancellationToken cancellationToken = default)
     {
         var term = SearchTerm.Normalize(search)?.ToLowerInvariant();
@@ -24,7 +25,7 @@ public class BeerRepository(AppDbContext context) : IBeerRepository
         var query = context.Beers
             .AsNoTracking()
             .Include(b => b.FermentationParameters)
-            .Where(b => b.IsActive);
+            .Where(b => deletedOnly ? !b.IsActive : b.IsActive);
 
         if (term is not null)
         {
@@ -35,12 +36,21 @@ public class BeerRepository(AppDbContext context) : IBeerRepository
 
         query = (sortField, descending) switch
         {
-            ("style", false) => query.OrderBy(b => b.Style).ThenBy(b => b.Name),
-            ("style", true) => query.OrderByDescending(b => b.Style).ThenBy(b => b.Name),
-            ("parameters", false) => query.OrderBy(b => b.FermentationParameters == null).ThenBy(b => b.Name),
-            ("parameters", true) => query.OrderByDescending(b => b.FermentationParameters == null).ThenBy(b => b.Name),
+            ("style", false) => query.OrderBy(b => b.Style).ThenByDescending(b => b.CreatedAt),
+            ("style", true) => query.OrderByDescending(b => b.Style).ThenByDescending(b => b.CreatedAt),
+            ("parameters", false) => query.OrderBy(b => b.FermentationParameters == null).ThenByDescending(b => b.CreatedAt),
+            ("parameters", true) => query.OrderByDescending(b => b.FermentationParameters == null).ThenByDescending(b => b.CreatedAt),
+            ("name", false) => query.OrderBy(b => b.Name),
             ("name", true) => query.OrderByDescending(b => b.Name),
-            _ => query.OrderBy(b => b.Name),
+            ("createdat", false) => query.OrderBy(b => b.CreatedAt).ThenBy(b => b.Name),
+            ("updatedat", false) => query.OrderBy(b => b.UpdatedAt ?? b.CreatedAt).ThenBy(b => b.Name),
+            ("updatedat", true) => query.OrderByDescending(b => b.UpdatedAt ?? b.CreatedAt).ThenBy(b => b.Name),
+            ("createdat", true) => query.OrderByDescending(b => b.CreatedAt).ThenBy(b => b.Name),
+            ("deletedat", false) => query.OrderBy(b => b.DeletedAt ?? b.UpdatedAt ?? b.CreatedAt).ThenBy(b => b.Name),
+            ("deletedat", true) => query.OrderByDescending(b => b.DeletedAt ?? b.UpdatedAt ?? b.CreatedAt).ThenBy(b => b.Name),
+            _ => deletedOnly
+                ? query.OrderByDescending(b => b.DeletedAt ?? b.UpdatedAt ?? b.CreatedAt).ThenBy(b => b.Name)
+                : query.OrderByDescending(b => b.CreatedAt).ThenBy(b => b.Name),
         };
 
         var totalItems = await query.CountAsync(cancellationToken);
@@ -59,6 +69,12 @@ public class BeerRepository(AppDbContext context) : IBeerRepository
         return await context.Beers
             .Include(b => b.FermentationParameters)
             .FirstOrDefaultAsync(b => b.Id == id && b.IsActive, cancellationToken);
+    }
+
+    public async Task<Beer?> GetByIdIncludingDeletedAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await context.Beers
+            .FirstOrDefaultAsync(b => b.Id == id, cancellationToken);
     }
 
     public async Task<bool> ExistsByNameAsync(

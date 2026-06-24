@@ -16,9 +16,10 @@ public static class BeerEndpoints
             string? sortDir,
             int page,
             int pageSize,
+            bool? deletedOnly,
             IBeerService service,
             CancellationToken ct) =>
-            Results.Ok(await service.GetAllAsync(search, sortBy, sortDir, page, pageSize, ct)))
+            Results.Ok(await service.GetAllAsync(search, sortBy, sortDir, page, pageSize, deletedOnly ?? false, ct)))
             .WithName("GetBeers");
 
         group.MapGet("/{id:guid}", async (Guid id, IBeerService service, CancellationToken ct) =>
@@ -42,6 +43,13 @@ public static class BeerEndpoints
             return Results.NoContent();
         })
         .WithName("DeleteBeer");
+
+        group.MapPost("/{id:guid}/restore", async (Guid id, IBeerService service, CancellationToken ct) =>
+        {
+            await service.RestoreAsync(id, ct);
+            return Results.NoContent();
+        })
+        .WithName("RestoreBeer");
 
         group.MapPut("/{id:guid}/parameters", async (
             Guid id,

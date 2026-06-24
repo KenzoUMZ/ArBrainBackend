@@ -198,11 +198,14 @@ public static class DbInitializer
         decimal minExtract,
         decimal maxExtract)
     {
+        var now = DateTime.UtcNow;
         var beer = new Beer
         {
             Id = Guid.NewGuid(),
             Name = name,
             Style = style,
+            CreatedAt = now,
+            UpdatedAt = now,
         };
 
         beer.FermentationParameters = new BeerFermentationParameters
@@ -220,13 +223,18 @@ public static class DbInitializer
         return beer;
     }
 
-    private static Tank CreateTank(string name, decimal capacityLiters) =>
-        new()
+    private static Tank CreateTank(string name, decimal capacityLiters)
+    {
+        var now = DateTime.UtcNow;
+        return new Tank
         {
             Id = Guid.NewGuid(),
             Name = name,
             CapacityLiters = capacityLiters,
+            CreatedAt = now,
+            UpdatedAt = now,
         };
+    }
 
     private static decimal Lerp(decimal from, decimal to, decimal t) =>
         from + (to - from) * t;

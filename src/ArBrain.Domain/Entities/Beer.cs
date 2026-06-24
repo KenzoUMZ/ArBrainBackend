@@ -19,6 +19,8 @@ public class Beer
 
     public DateTime? UpdatedAt { get; set; }
 
+    public DateTime? DeletedAt { get; set; }
+
     /// <summary>Parâmetros fermentativos aceitáveis vinculados à cerveja.</summary>
     public BeerFermentationParameters? FermentationParameters { get; set; }
 

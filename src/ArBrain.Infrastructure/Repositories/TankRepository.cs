@@ -14,6 +14,7 @@ public class TankRepository(AppDbContext context) : ITankRepository
         string? sortDir = null,
         int page = 1,
         int pageSize = PaginationQuery.DefaultPageSize,
+        bool deletedOnly = false,
         CancellationToken cancellationToken = default)
     {
         var term = SearchTerm.Normalize(search)?.ToLowerInvariant();
@@ -23,7 +24,7 @@ public class TankRepository(AppDbContext context) : ITankRepository
 
         var query = context.Tanks
             .AsNoTracking()
-            .Where(t => t.IsActive);
+            .Where(t => deletedOnly ? !t.IsActive : t.IsActive);
 
         if (term is not null)
         {
@@ -32,10 +33,19 @@ public class TankRepository(AppDbContext context) : ITankRepository
 
         query = (sortField, descending) switch
         {
-            ("capacity", false) => query.OrderBy(t => t.CapacityLiters).ThenBy(t => t.Name),
-            ("capacity", true) => query.OrderByDescending(t => t.CapacityLiters).ThenBy(t => t.Name),
+            ("capacity", false) => query.OrderBy(t => t.CapacityLiters).ThenByDescending(t => t.CreatedAt),
+            ("capacity", true) => query.OrderByDescending(t => t.CapacityLiters).ThenByDescending(t => t.CreatedAt),
+            ("name", false) => query.OrderBy(t => t.Name),
             ("name", true) => query.OrderByDescending(t => t.Name),
-            _ => query.OrderBy(t => t.Name),
+            ("createdat", false) => query.OrderBy(t => t.CreatedAt).ThenBy(t => t.Name),
+            ("updatedat", false) => query.OrderBy(t => t.UpdatedAt ?? t.CreatedAt).ThenBy(t => t.Name),
+            ("updatedat", true) => query.OrderByDescending(t => t.UpdatedAt ?? t.CreatedAt).ThenBy(t => t.Name),
+            ("createdat", true) => query.OrderByDescending(t => t.CreatedAt).ThenBy(t => t.Name),
+            ("deletedat", false) => query.OrderBy(t => t.DeletedAt ?? t.UpdatedAt ?? t.CreatedAt).ThenBy(t => t.Name),
+            ("deletedat", true) => query.OrderByDescending(t => t.DeletedAt ?? t.UpdatedAt ?? t.CreatedAt).ThenBy(t => t.Name),
+            _ => deletedOnly
+                ? query.OrderByDescending(t => t.DeletedAt ?? t.UpdatedAt ?? t.CreatedAt).ThenBy(t => t.Name)
+                : query.OrderByDescending(t => t.CreatedAt).ThenBy(t => t.Name),
         };
 
         var totalItems = await query.CountAsync(cancellationToken);
@@ -47,6 +57,12 @@ public class TankRepository(AppDbContext context) : ITankRepository
     {
         return await context.Tanks
             .FirstOrDefaultAsync(t => t.Id == id && t.IsActive, cancellationToken);
+    }
+
+    public async Task<Tank?> GetByIdIncludingDeletedAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await context.Tanks
+            .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
     }
 
     public async Task<bool> ExistsByNameAsync(

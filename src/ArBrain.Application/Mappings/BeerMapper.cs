@@ -14,6 +14,8 @@ public static class BeerMapper
             beer.Name,
             beer.Style,
             beer.CreatedAt,
+            beer.UpdatedAt ?? beer.CreatedAt,
+            beer.DeletedAt,
             beer.FermentationParameters is null
                 ? null
                 : ToParametersDto(beer.FermentationParameters));

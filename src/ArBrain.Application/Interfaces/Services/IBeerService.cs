@@ -12,6 +12,7 @@ public interface IBeerService
         string? sortDir = null,
         int page = 1,
         int pageSize = PaginationQuery.DefaultPageSize,
+        bool deletedOnly = false,
         CancellationToken cancellationToken = default);
 
     Task<BeerDto> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
@@ -21,6 +22,8 @@ public interface IBeerService
     Task<BeerDto> UpdateAsync(Guid id, UpdateBeerDto dto, CancellationToken cancellationToken = default);
 
     Task DeleteAsync(Guid id, CancellationToken cancellationToken = default);
+
+    Task RestoreAsync(Guid id, CancellationToken cancellationToken = default);
 
     Task<BeerFermentationParametersDto> GetParametersAsync(
         Guid beerId,

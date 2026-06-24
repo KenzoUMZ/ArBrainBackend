@@ -11,9 +11,12 @@ public interface ITankRepository
         string? sortDir = null,
         int page = 1,
         int pageSize = PaginationQuery.DefaultPageSize,
+        bool deletedOnly = false,
         CancellationToken cancellationToken = default);
 
     Task<Tank?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+
+    Task<Tank?> GetByIdIncludingDeletedAsync(Guid id, CancellationToken cancellationToken = default);
 
     Task<bool> ExistsByNameAsync(string name, Guid? excludeId = null, CancellationToken cancellationToken = default);
 

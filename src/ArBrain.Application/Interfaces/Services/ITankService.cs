@@ -12,6 +12,7 @@ public interface ITankService
         string? sortDir = null,
         int page = 1,
         int pageSize = PaginationQuery.DefaultPageSize,
+        bool deletedOnly = false,
         CancellationToken cancellationToken = default);
 
     Task<TankDto> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
@@ -21,4 +22,6 @@ public interface ITankService
     Task<TankDto> UpdateAsync(Guid id, UpdateTankDto dto, CancellationToken cancellationToken = default);
 
     Task DeleteAsync(Guid id, CancellationToken cancellationToken = default);
+
+    Task RestoreAsync(Guid id, CancellationToken cancellationToken = default);
 }
