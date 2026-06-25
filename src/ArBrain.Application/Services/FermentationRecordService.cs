@@ -100,7 +100,11 @@ public class FermentationRecordService(
         var summaries = await fermentationRecordRepository.GetBatchSummariesAsync(search, sortBy, sortDir, cancellationToken);
 
         return summaries
-            .Select(item => new BatchSummaryDto(item.BatchNumber, item.BeerName, item.Count))
+            .Select(item => new BatchSummaryDto(
+                item.BatchNumber,
+                item.BeerName,
+                item.Count,
+                item.ComplianceStatus))
             .ToList();
     }
 

@@ -27,7 +27,11 @@ public record CreateFermentationRecordDto(
     decimal Extract,
     string? Observations);
 
-public record BatchSummaryDto(string BatchNumber, string BeerName, int RecordCount);
+public record BatchSummaryDto(
+    string BatchNumber,
+    string BeerName,
+    int RecordCount,
+    FermentationComplianceStatus ComplianceStatus);
 
 public record BatchHistoryDto(
     string BatchNumber,

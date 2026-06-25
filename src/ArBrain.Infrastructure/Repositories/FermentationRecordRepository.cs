@@ -83,7 +83,7 @@ public class FermentationRecordRepository(AppDbContext context) : IFermentationR
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyList<(string BatchNumber, string BeerName, int Count)>> GetBatchSummariesAsync(
+    public async Task<IReadOnlyList<(string BatchNumber, string BeerName, int Count, FermentationComplianceStatus ComplianceStatus)>> GetBatchSummariesAsync(
         string? search = null,
         string? sortBy = null,
         string? sortDir = null,
@@ -112,6 +112,10 @@ public class FermentationRecordRepository(AppDbContext context) : IFermentationR
                 g.Key.BatchNumber,
                 g.Key.BeerName,
                 Count = g.Count(),
+                ComplianceStatus = g
+                    .OrderByDescending(r => r.RegisteredAt)
+                    .Select(r => r.ComplianceStatus)
+                    .First(),
             });
 
         grouped = (sortField, descending) switch
@@ -120,6 +124,8 @@ public class FermentationRecordRepository(AppDbContext context) : IFermentationR
             ("beername", true) => grouped.OrderByDescending(item => item.BeerName).ThenByDescending(item => item.BatchNumber),
             ("recordcount", false) => grouped.OrderBy(item => item.Count).ThenByDescending(item => item.BatchNumber),
             ("recordcount", true) => grouped.OrderByDescending(item => item.Count).ThenByDescending(item => item.BatchNumber),
+            ("compliancestatus", false) => grouped.OrderBy(item => item.ComplianceStatus).ThenByDescending(item => item.BatchNumber),
+            ("compliancestatus", true) => grouped.OrderByDescending(item => item.ComplianceStatus).ThenByDescending(item => item.BatchNumber),
             ("batchnumber", false) => grouped.OrderBy(item => item.BatchNumber),
             ("batchnumber", true) => grouped.OrderByDescending(item => item.BatchNumber),
             _ => grouped.OrderByDescending(item => item.BatchNumber),
@@ -128,7 +134,7 @@ public class FermentationRecordRepository(AppDbContext context) : IFermentationR
         var rows = await grouped.ToListAsync(cancellationToken);
 
         return rows
-            .Select(row => (row.BatchNumber, row.BeerName, row.Count))
+            .Select(row => (row.BatchNumber, row.BeerName, row.Count, row.ComplianceStatus))
             .ToList();
     }
 

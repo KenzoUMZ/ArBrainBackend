@@ -21,7 +21,7 @@ public interface IFermentationRecordRepository
         string batchNumber,
         CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyList<(string BatchNumber, string BeerName, int Count)>> GetBatchSummariesAsync(
+    Task<IReadOnlyList<(string BatchNumber, string BeerName, int Count, FermentationComplianceStatus ComplianceStatus)>> GetBatchSummariesAsync(
         string? search = null,
         string? sortBy = null,
         string? sortDir = null,
