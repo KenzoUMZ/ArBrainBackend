@@ -56,6 +56,7 @@ public class FermentationRecordRepository(AppDbContext context) : IFermentationR
             ("compliancestatus", false) => query.OrderBy(r => r.ComplianceStatus).ThenByDescending(r => r.RegisteredAt),
             ("compliancestatus", true) => query.OrderByDescending(r => r.ComplianceStatus).ThenByDescending(r => r.RegisteredAt),
             ("registeredat", false) => query.OrderBy(r => r.RegisteredAt),
+            ("registeredat", true) => query.OrderByDescending(r => r.RegisteredAt),
             _ => query.OrderByDescending(r => r.RegisteredAt),
         };
 
@@ -120,6 +121,7 @@ public class FermentationRecordRepository(AppDbContext context) : IFermentationR
             ("recordcount", false) => grouped.OrderBy(item => item.Count).ThenByDescending(item => item.BatchNumber),
             ("recordcount", true) => grouped.OrderByDescending(item => item.Count).ThenByDescending(item => item.BatchNumber),
             ("batchnumber", false) => grouped.OrderBy(item => item.BatchNumber),
+            ("batchnumber", true) => grouped.OrderByDescending(item => item.BatchNumber),
             _ => grouped.OrderByDescending(item => item.BatchNumber),
         };
 
