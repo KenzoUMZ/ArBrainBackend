@@ -4,6 +4,7 @@ using ArBrain.Application.Interfaces.Services;
 
 namespace ArBrain.Api.Endpoints;
 
+/// <summary>Endpoints de tanques e restauração da lixeira.</summary>
 public static class TankEndpoints
 {
     public static RouteGroupBuilder MapTankEndpoints(this IEndpointRouteBuilder app)

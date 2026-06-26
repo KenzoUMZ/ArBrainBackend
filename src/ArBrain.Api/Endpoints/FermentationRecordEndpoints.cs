@@ -4,6 +4,7 @@ using ArBrain.Application.Interfaces.Services;
 
 namespace ArBrain.Api.Endpoints;
 
+/// <summary>Endpoints de apontamentos fermentativos e histórico por lote.</summary>
 public static class FermentationRecordEndpoints
 {
     public static RouteGroupBuilder MapFermentationRecordEndpoints(this IEndpointRouteBuilder app)

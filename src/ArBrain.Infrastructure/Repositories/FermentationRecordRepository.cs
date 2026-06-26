@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ArBrain.Infrastructure.Repositories;
 
+/// <summary>Consultas e persistência de apontamentos fermentativos.</summary>
 public class FermentationRecordRepository(AppDbContext context) : IFermentationRecordRepository
 {
     public async Task<(IReadOnlyList<FermentationRecord> Items, int TotalItems)> GetAllAsync(
@@ -83,6 +84,9 @@ public class FermentationRecordRepository(AppDbContext context) : IFermentationR
             .ToListAsync(cancellationToken);
     }
 
+    /// <summary>
+    /// Agrupa apontamentos por lote. O status exibido é o do registro mais recente de cada lote.
+    /// </summary>
     public async Task<IReadOnlyList<(string BatchNumber, string BeerName, int Count, FermentationComplianceStatus ComplianceStatus)>> GetBatchSummariesAsync(
         string? search = null,
         string? sortBy = null,
@@ -138,6 +142,7 @@ public class FermentationRecordRepository(AppDbContext context) : IFermentationR
             .ToList();
     }
 
+    /// <summary>Conta apontamentos por status de conformidade para o dashboard.</summary>
     public async Task<Dictionary<FermentationComplianceStatus, int>> GetComplianceCountsAsync(
         CancellationToken cancellationToken = default)
     {

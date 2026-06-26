@@ -2,6 +2,7 @@ using ArBrain.Application.Interfaces.Services;
 
 namespace ArBrain.Api.Endpoints;
 
+/// <summary>Indicadores agregados da tela inicial.</summary>
 public static class DashboardEndpoints
 {
     public static RouteGroupBuilder MapDashboardEndpoints(this IEndpointRouteBuilder app)

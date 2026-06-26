@@ -11,6 +11,9 @@ using ArBrain.Domain.Services;
 
 namespace ArBrain.Application.Services;
 
+/// <summary>
+/// Orquestra apontamentos fermentativos: validação, classificação de conformidade e histórico por lote.
+/// </summary>
 public class FermentationRecordService(
     IFermentationRecordRepository fermentationRecordRepository,
     IBeerRepository beerRepository,
@@ -46,6 +49,10 @@ public class FermentationRecordService(
         return FermentationRecordMapper.ToDto(record);
     }
 
+    /// <summary>
+    /// Persiste o apontamento com status de conformidade calculado no momento do registro.
+    /// Exige cerveja com parâmetros fermentativos cadastrados.
+    /// </summary>
     public async Task<FermentationRecordDto> CreateAsync(
         CreateFermentationRecordDto dto,
         CancellationToken cancellationToken = default)
@@ -108,6 +115,7 @@ public class FermentationRecordService(
             .ToList();
     }
 
+    /// <summary>Retorna a evolução cronológica de um lote (todos os apontamentos do mesmo número).</summary>
     public async Task<BatchHistoryDto> GetBatchHistoryAsync(
         string batchNumber,
         CancellationToken cancellationToken = default)

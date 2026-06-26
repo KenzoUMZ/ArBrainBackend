@@ -4,6 +4,7 @@ using ArBrain.Application.Interfaces.Services;
 
 namespace ArBrain.Api.Endpoints;
 
+/// <summary>Endpoints de cervejas, parâmetros fermentativos e restauração da lixeira.</summary>
 public static class BeerEndpoints
 {
     public static RouteGroupBuilder MapBeerEndpoints(this IEndpointRouteBuilder app)

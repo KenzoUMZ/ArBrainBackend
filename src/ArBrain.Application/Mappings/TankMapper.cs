@@ -3,6 +3,7 @@ using ArBrain.Domain.Entities;
 
 namespace ArBrain.Application.Mappings;
 
+/// <summary>Projeção de entidade de tanque para DTO da API.</summary>
 public static class TankMapper
 {
     public static TankDto ToDto(Tank tank) =>

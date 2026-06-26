@@ -5,6 +5,7 @@ using ArBrain.Domain.Enums;
 
 namespace ArBrain.Application.Services;
 
+/// <summary>Agrega contadores de conformidade para a tela inicial do sistema.</summary>
 public class DashboardService(IFermentationRecordRepository fermentationRecordRepository)
     : IDashboardService
 {

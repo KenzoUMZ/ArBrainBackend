@@ -9,6 +9,7 @@ using ArBrain.Domain.Entities;
 
 namespace ArBrain.Application.Services;
 
+/// <summary>Cadastro de cervejas, parâmetros fermentativos e inativação lógica (soft delete).</summary>
 public class BeerService(IBeerRepository beerRepository) : IBeerService
 {
     public async Task<PagedResult<BeerDto>> GetAllAsync(
@@ -84,6 +85,7 @@ public class BeerService(IBeerRepository beerRepository) : IBeerService
         return BeerMapper.ToDto(beer);
     }
 
+    /// <summary>Inativa a cerveja (soft delete) sem remover registros históricos.</summary>
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var beer = await beerRepository.GetByIdAsync(id, cancellationToken)
@@ -131,6 +133,7 @@ public class BeerService(IBeerRepository beerRepository) : IBeerService
         return BeerMapper.ToParametersDto(beer.FermentationParameters);
     }
 
+    /// <summary>Cria ou atualiza os limites aceitáveis usados na classificação de conformidade.</summary>
     public async Task<BeerFermentationParametersDto> UpsertParametersAsync(
         Guid beerId,
         UpsertBeerParametersDto dto,

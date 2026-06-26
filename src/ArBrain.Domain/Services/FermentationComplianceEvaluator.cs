@@ -13,6 +13,10 @@ public static class FermentationComplianceEvaluator
     /// </summary>
     private const decimal AttentionMarginRatio = 0.10m;
 
+    /// <summary>
+    /// Classifica o apontamento com base nos três indicadores.
+    /// Prioridade: fora do padrão &gt; requer atenção (10% das extremidades) &gt; dentro do padrão.
+    /// </summary>
     public static FermentationComplianceStatus Evaluate(
         decimal temperature,
         decimal ph,

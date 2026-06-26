@@ -9,6 +9,7 @@ using ArBrain.Domain.Entities;
 
 namespace ArBrain.Application.Services;
 
+/// <summary>Cadastro de tanques e inativação lógica (soft delete).</summary>
 public class TankService(ITankRepository tankRepository) : ITankService
 {
     public async Task<PagedResult<TankDto>> GetAllAsync(
@@ -84,6 +85,7 @@ public class TankService(ITankRepository tankRepository) : ITankService
         return TankMapper.ToDto(tank);
     }
 
+    /// <summary>Inativa o tanque (soft delete) sem remover apontamentos vinculados.</summary>
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var tank = await tankRepository.GetByIdAsync(id, cancellationToken)
